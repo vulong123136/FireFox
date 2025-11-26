@@ -38,7 +38,7 @@
             // 
             btnContinue.BackgroundImage = (Image)resources.GetObject("btnContinue.BackgroundImage");
             btnContinue.BackgroundImageLayout = ImageLayout.Stretch;
-            btnContinue.Location = new Point(137, 149);
+            btnContinue.Location = new Point(338, 302);
             btnContinue.Name = "btnContinue";
             btnContinue.Size = new Size(150, 147);
             btnContinue.TabIndex = 0;
@@ -49,7 +49,7 @@
             // 
             btnMenu.BackgroundImage = (Image)resources.GetObject("btnMenu.BackgroundImage");
             btnMenu.BackgroundImageLayout = ImageLayout.Stretch;
-            btnMenu.Location = new Point(327, 149);
+            btnMenu.Location = new Point(672, 302);
             btnMenu.Name = "btnMenu";
             btnMenu.Size = new Size(146, 147);
             btnMenu.TabIndex = 1;
@@ -60,7 +60,7 @@
             // 
             btnExit.BackgroundImage = (Image)resources.GetObject("btnExit.BackgroundImage");
             btnExit.BackgroundImageLayout = ImageLayout.Stretch;
-            btnExit.Location = new Point(516, 149);
+            btnExit.Location = new Point(1010, 302);
             btnExit.Name = "btnExit";
             btnExit.Size = new Size(146, 147);
             btnExit.TabIndex = 2;
@@ -74,14 +74,13 @@
             BackColor = Color.DimGray;
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = ImageLayout.Stretch;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(1509, 818);
             Controls.Add(btnExit);
             Controls.Add(btnMenu);
             Controls.Add(btnContinue);
             DoubleBuffered = true;
             Name = "FormPauseMenu";
             Text = "FormPauseMenu";
-            WindowState = FormWindowState.Maximized;
             Load += FormPauseMenu_Load;
             ResumeLayout(false);
         }

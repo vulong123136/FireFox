@@ -113,7 +113,6 @@
             Controls.Add(label1);
             ForeColor = Color.Yellow;
             Name = "Form2";
-            WindowState = FormWindowState.Maximized;
             Load += Form2_Load;
             ResumeLayout(false);
             PerformLayout();

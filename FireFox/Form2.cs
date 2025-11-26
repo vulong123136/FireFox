@@ -46,13 +46,7 @@ namespace FireFox
         private void label1_Click(object sender, EventArgs e) { }
         private void Form2_Load(object sender, EventArgs e) 
         {
-            label1.Left = (this.ClientSize.Width - label1.Width) / 2;
 
-            radioButton1.Left = this.ClientSize.Width / 2 - 300;
-            radioButton2.Left = this.ClientSize.Width / 2 - 100;
-            radioButton3.Left = this.ClientSize.Width / 2 + 100;
-
-            button1.Left = (this.ClientSize.Width - button1.Width) / 2;
         }
     }
 }

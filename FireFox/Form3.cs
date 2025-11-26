@@ -15,16 +15,22 @@ namespace FireFox
         List<Square> boardData = new List<Square>();
         List<Card> chanceCards = new List<Card>();
         List<Card> communityCards = new List<Card>();
-
         int currentPlayerIndex = 0;
         bool isProcessingTurn = false;
         int stepX, stepY;
         Label lblInfoPanel;
 
+        private void Form3_Load(object sender, EventArgs e)
+        {
+            
+        }
+
         public Form3(int soNguoi)
         {
             InitializeComponent();
             this.totalPlayers = soNguoi;
+            this.KeyPreview = true;
+
 
             // Nạp ảnh bàn cờ an toàn
             Image boardImg = GetImageFromResource("banco"); // Đổi tên 'banco' nếu ảnh của bạn tên khác
@@ -411,6 +417,49 @@ namespace FireFox
             communityCards.Add(new Card("Nhận tiền thừa kế 100$", CardAction.Money, 100));
             communityCards.Add(new Card("VÀO TÙ NGAY!", CardAction.GoJail, 0));
         }
+        private void ShowWinEffect(string winnerName)
+        {
+            FormWinEffect f = new FormWinEffect(winnerName);
+            f.ShowDialog();
+        }
+        private void EliminatePlayer(string name)
+        {
+            FormPlayerEliminated f = new FormPlayerEliminated(name);
+            f.ShowDialog();
+        }
+        public bool WantsToExit = false;
+        private void ShowPauseMenu()
+        {
+            FormPauseMenu f = new FormPauseMenu();
+            f.ShowDialog();
+
+            if (f.Option == 1)
+            {
+                // Tiếp tục → không làm gì
+            }
+            else if (f.Option == 2)
+            {
+                // Về Form1
+                this.Hide();
+                Form1 f1 = new Form1();
+                f1.ShowDialog();
+                this.Close();
+            }
+            else if (f.Option == 3)
+            {
+                WantsToExit = true;
+                this.Close();
+            }
+        }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                ShowPauseMenu();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
     }
 
     // --- 2. CÁC CLASS DỮ LIỆU PHỤ (ĐẶT Ở DƯỚI CÙNG) ---
@@ -467,4 +516,5 @@ namespace FireFox
             OwnedProperties = new List<Square>();
         }
     }
+    
 }

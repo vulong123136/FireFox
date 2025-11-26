@@ -104,6 +104,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
+            BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1477, 862);
             Controls.Add(button1);
             Controls.Add(radioButton3);
@@ -112,6 +113,7 @@
             Controls.Add(label1);
             ForeColor = Color.Yellow;
             Name = "Form2";
+            WindowState = FormWindowState.Maximized;
             Load += Form2_Load;
             ResumeLayout(false);
             PerformLayout();

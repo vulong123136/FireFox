@@ -5,6 +5,7 @@ namespace FireFox
 {
     public partial class Form2 : Form
     {
+        public bool WantsToExit = false;
         public Form2()
         {
             InitializeComponent();
@@ -26,18 +27,32 @@ namespace FireFox
             {
                 soNguoi = 4;
             }
-
-            // 2. SỬA LỖI 1: Truyền biến 'soNguoi' vào trong ngoặc
-            // Lúc này Form3 sẽ nhận được số 2, 3, hoặc 4
             Form3 form3 = new Form3(soNguoi);
 
-            this.Hide();        // Ẩn Form 2
-            form3.ShowDialog(); // Hiện Form 3
-            this.Show();        // Khi Form 3 đóng thì hiện lại Form 2
+            this.Hide();        
+            form3.ShowDialog(); 
+            if (form3.WantsToExit == true)
+            {
+                WantsToExit = true; // Báo hiệu cho Form1 biết là cần thoát
+                this.Close();
+            }
+            else
+            {
+                this.Show();
+            };       
         }
 
         // Các hàm sự kiện thừa (nếu có lỡ tạo thì để trống như này để không bị lỗi)
         private void label1_Click(object sender, EventArgs e) { }
-        private void Form2_Load(object sender, EventArgs e) { }
+        private void Form2_Load(object sender, EventArgs e) 
+        {
+            label1.Left = (this.ClientSize.Width - label1.Width) / 2;
+
+            radioButton1.Left = this.ClientSize.Width / 2 - 300;
+            radioButton2.Left = this.ClientSize.Width / 2 - 100;
+            radioButton3.Left = this.ClientSize.Width / 2 + 100;
+
+            button1.Left = (this.ClientSize.Width - button1.Width) / 2;
+        }
     }
 }

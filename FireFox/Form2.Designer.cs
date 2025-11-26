@@ -40,11 +40,11 @@
             // 
             label1.AutoSize = true;
             label1.BackColor = Color.Transparent;
-            label1.Font = new Font("Showcard Gothic", 48F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label1.Font = new Font("Microsoft Sans Serif", 48F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label1.ForeColor = Color.Yellow;
             label1.Location = new Point(183, 317);
             label1.Name = "label1";
-            label1.Size = new Size(1143, 79);
+            label1.Size = new Size(1084, 73);
             label1.TabIndex = 0;
             label1.Text = "Vui Lòng Chọn Số Lượng Người Chơi";
             label1.Click += label1_Click;
@@ -89,7 +89,7 @@
             // button1
             // 
             button1.BackColor = Color.FromArgb(255, 128, 0);
-            button1.Font = new Font("Showcard Gothic", 36F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            button1.Font = new Font("Microsoft Sans Serif", 36F, FontStyle.Regular, GraphicsUnit.Point, 0);
             button1.ForeColor = Color.Yellow;
             button1.Location = new Point(629, 574);
             button1.Name = "button1";
@@ -113,7 +113,6 @@
             Controls.Add(label1);
             ForeColor = Color.Yellow;
             Name = "Form2";
-            WindowState = FormWindowState.Maximized;
             Load += Form2_Load;
             ResumeLayout(false);
             PerformLayout();

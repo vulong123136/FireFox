@@ -38,7 +38,7 @@
             // 
             lb_name.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             lb_name.BackColor = Color.Transparent;
-            lb_name.Font = new Font("Jokerman", 99.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lb_name.Font = new Font("Microsoft Sans Serif", 99.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lb_name.ForeColor = Color.Yellow;
             lb_name.Location = new Point(360, 200);
             lb_name.Name = "lb_name";
@@ -51,7 +51,7 @@
             // 
             btn_choi.Anchor = AnchorStyles.Bottom;
             btn_choi.BackColor = Color.Yellow;
-            btn_choi.Font = new Font("Showcard Gothic", 27.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btn_choi.Font = new Font("Microsoft Sans Serif", 27.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btn_choi.Location = new Point(376, 496);
             btn_choi.Name = "btn_choi";
             btn_choi.Size = new Size(243, 115);
@@ -64,7 +64,7 @@
             // 
             btn_thoat.Anchor = AnchorStyles.Bottom;
             btn_thoat.BackColor = Color.Yellow;
-            btn_thoat.Font = new Font("Showcard Gothic", 27.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btn_thoat.Font = new Font("Microsoft Sans Serif", 27.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btn_thoat.Location = new Point(875, 496);
             btn_thoat.Name = "btn_thoat";
             btn_thoat.Size = new Size(240, 115);
@@ -86,7 +86,6 @@
             Controls.Add(lb_name);
             Name = "Form1";
             Text = "Form1";
-            WindowState = FormWindowState.Maximized;
             Load += Form1_Load;
             ResumeLayout(false);
         }

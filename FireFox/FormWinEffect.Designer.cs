@@ -2,90 +2,64 @@
 {
     partial class FormWinEffect
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
+            if (disposing && (components != null)) components.Dispose();
             base.Dispose(disposing);
         }
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
-            label1 = new Label();
-            fadeInTimer = new System.Windows.Forms.Timer(components);
-            confettiTimer = new System.Windows.Forms.Timer(components);
-            pbFrame = new PictureBox();
-            ((System.ComponentModel.ISupportInitialize)pbFrame).BeginInit();
-            SuspendLayout();
+            this.components = new System.ComponentModel.Container();
+            this.label1 = new System.Windows.Forms.Label();
+            this.fadeInTimer = new System.Windows.Forms.Timer(this.components);
+            this.confettiTimer = new System.Windows.Forms.Timer(this.components);
+            this.SuspendLayout();
             // 
             // label1
             // 
-            label1.Location = new Point(138, 153);
-            label1.Name = "label1";
-            label1.Size = new Size(522, 140);
-            label1.TabIndex = 0;
-            label1.Text = "label1";
+            this.label1.AutoSize = true;
+            this.label1.BackColor = System.Drawing.Color.Transparent;
+            this.label1.Font = new System.Drawing.Font("Arial", 60F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.label1.ForeColor = System.Drawing.Color.Gold;
+            this.label1.Location = new System.Drawing.Point(150, 150);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(500, 100);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "WINNER";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // fadeInTimer
             // 
-            fadeInTimer.Interval = 30;
-            fadeInTimer.Tick += fadeInTimer_Tick_1;
+            this.fadeInTimer.Interval = 30;
+            this.fadeInTimer.Tick += new System.EventHandler(this.fadeInTimer_Tick);
             // 
             // confettiTimer
             // 
-            confettiTimer.Interval = 30;
-            confettiTimer.Tick += confettiTimer_Tick_1;
-            // 
-            // pbFrame
-            // 
-            pbFrame.BackColor = Color.Transparent;
-            pbFrame.BackgroundImageLayout = ImageLayout.None;
-            pbFrame.Image = Properties.Resources.GoldenFrame;
-            pbFrame.Location = new Point(2, -5);
-            pbFrame.Name = "pbFrame";
-            pbFrame.Size = new Size(795, 457);
-            pbFrame.SizeMode = PictureBoxSizeMode.StretchImage;
-            pbFrame.TabIndex = 1;
-            pbFrame.TabStop = false;
+            this.confettiTimer.Interval = 30;
+            this.confettiTimer.Tick += new System.EventHandler(this.confettiTimer_Tick);
             // 
             // FormWinEffect
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
-            Controls.Add(label1);
-            Controls.Add(pbFrame);
-            Name = "FormWinEffect";
-            Text = "FormWinEffect";
-            WindowState = FormWindowState.Maximized;
-            Load += FormWinEffect_Load;
-            ((System.ComponentModel.ISupportInitialize)pbFrame).EndInit();
-            ResumeLayout(false);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.label1);
+            this.Name = "FormWinEffect";
+            this.Text = "FormWinEffect";
+            this.Load += new System.EventHandler(this.FormWinEffect_Load);
+            this.ResumeLayout(false);
+            this.PerformLayout();
         }
 
         #endregion
 
-        private Label label1;
+        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Timer fadeInTimer;
         private System.Windows.Forms.Timer confettiTimer;
-        private PictureBox pbFrame;
     }
 }

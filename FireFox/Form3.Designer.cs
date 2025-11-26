@@ -86,7 +86,8 @@
             Controls.Add(lblDice);
             Controls.Add(btnRoll);
             Name = "Form3";
-            Text = "Form3";
+            Text = "Cờ Tỷ Phú - Bàn Cờ";
+            Load += Form3_Load;
             ((System.ComponentModel.ISupportInitialize)pbDice).EndInit();
             ResumeLayout(false);
             PerformLayout();

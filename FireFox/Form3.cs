@@ -7,50 +7,58 @@ using System.Linq;
 
 namespace FireFox
 {
-    // --- 1. CLASS FORM CHÍNH (BẮT BUỘC PHẢI ĐỂ ĐẦU TIÊN) ---
     public partial class Form3 : Form
     {
+        // --- KHAI BÁO BIẾN TOÀN CỤC ---
         int totalPlayers;
         List<Player> players = new List<Player>();
         List<Square> boardData = new List<Square>();
         List<Card> chanceCards = new List<Card>();
         List<Card> communityCards = new List<Card>();
+
         int currentPlayerIndex = 0;
-        bool isProcessingTurn = false;
-        int stepX, stepY;
-        Label lblInfoPanel;
+        bool isProcessingTurn = false; // Chặn bấm nút khi đang xử lý
+        int stepX, stepY; // Kích thước bước nhảy quân cờ
+        Label lblInfoPanel; // Bảng hiển thị tiền
 
-        private void Form3_Load(object sender, EventArgs e)
-        {
-            
-        }
+        public bool WantsToExit = false; // Biến cờ báo thoát game
 
+        // --- KHỞI TẠO FORM ---
         public Form3(int soNguoi)
         {
             InitializeComponent();
             this.totalPlayers = soNguoi;
-            this.KeyPreview = true;
+            this.KeyPreview = true; // Để bắt phím ESC
 
-
-            // Nạp ảnh bàn cờ an toàn
-            Image boardImg = GetImageFromResource("banco"); // Đổi tên 'banco' nếu ảnh của bạn tên khác
+            // Nạp ảnh bàn cờ (Nếu có trong Resources)
+            Image boardImg = GetImageFromResource("banco");
             if (boardImg != null)
             {
                 this.BackgroundImage = boardImg;
                 this.BackgroundImageLayout = ImageLayout.Stretch;
             }
 
+            // Tính toán tọa độ bàn cờ dựa trên kích thước Form
             stepX = this.ClientSize.Width / 13;
             stepY = this.ClientSize.Height / 13;
 
+            // Khởi tạo dữ liệu
             CreateInfoPanel();
             InitBoardData();
             InitCards();
             SetupGame();
 
+            // Hiển thị xúc xắc mặc định
             if (pbDice != null) pbDice.Image = GetImageFromResource("dice1");
         }
 
+        private void Form3_Load(object sender, EventArgs e)
+        {
+            // Tự động gắn tiếng click cho tất cả nút trên bàn cờ
+            SoundManager.AttachClickSound(this);
+        }
+
+        // --- SỰ KIỆN NÚT GIEO XÚC XẮC (VÒNG LẶP CHÍNH) ---
         private void btnRoll_Click(object sender, EventArgs e)
         {
             if (isProcessingTurn) return;
@@ -62,56 +70,197 @@ namespace FireFox
             Random rnd = new Random();
             int dice = rnd.Next(1, 7);
 
+            // Hiển thị hình ảnh xúc xắc
             if (pbDice != null) pbDice.Image = GetImageFromResource("dice" + dice);
             AddLog($"{current.Name} gieo được {dice} điểm.");
 
+            // Di chuyển người chơi
             current.Position += dice;
+
+            // Xử lý khi đi qua ô Start
             if (current.Position >= 40)
             {
                 current.Position %= 40;
                 current.Money += 200;
+
+                // Âm thanh nhận tiền
+                SoundManager.PlaySound(Properties.Resources.cash);
                 AddLog("Qua vòng Start +200$");
             }
+
+            // Cập nhật vị trí hình ảnh
             MovePlayerToken(current);
 
+            // Xử lý logic tại ô vừa đến (Mua đất, trả tiền...)
             HandleSquareLogic(current);
+
+            // Cập nhật bảng thông tin tiền nong
             UpdateInfoPanel();
 
-            // Kiểm tra phá sản
+            // KIỂM TRA PHÁ SẢN VÀ CHIẾN THẮNG
             if (CheckBankruptcy(current))
             {
-                // Nếu phá sản, không tăng index vì danh sách đã thụt lại
+                // Nếu có người vừa phá sản, kiểm tra xem còn lại 1 người duy nhất không?
+                if (players.Count == 1)
+                {
+                    ShowWinEffect(players[0].Name);
+                    this.Close(); // Đóng Form game sau khi hiệu ứng kết thúc
+                    return;
+                }
+                // Nếu vẫn còn > 1 người, game tiếp tục (index đã được xử lý trong CheckBankruptcy)
             }
             else
             {
+                // Nếu không phá sản, chuyển lượt cho người tiếp theo
                 currentPlayerIndex++;
             }
 
+            // Quay vòng index nếu vượt quá số người chơi
             if (currentPlayerIndex >= players.Count) currentPlayerIndex = 0;
 
-            if (players.Count == 1)
-            {
-                MessageBox.Show($"CHÚC MỪNG {players[0].Name} ĐÃ VÔ ĐỊCH!", "GAME OVER");
-                this.Close();
-            }
-            else
-            {
-                UpdateTurnUI();
-            }
-
+            UpdateTurnUI();
             isProcessingTurn = false;
         }
 
+        // --- XỬ LÝ LOGIC Ô CỜ ---
+        private void HandleSquareLogic(Player p)
+        {
+            if (p.Position >= boardData.Count) return;
+            Square sq = boardData[p.Position];
+            AddLog($"-> Đến: {sq.Name}");
+
+            if (sq.Type == SquareType.Land || sq.Type == SquareType.Company)
+            {
+                // 1. Đất chưa có chủ -> Mua
+                if (sq.Owner == null)
+                {
+                    if (p.Money >= sq.Price)
+                    {
+                        DialogResult result = MessageBox.Show($"Mua '{sq.Name}' giá {sq.Price}$?", "Mua đất", MessageBoxButtons.YesNo);
+                        if (result == DialogResult.Yes)
+                        {
+                            p.Money -= sq.Price;
+                            sq.Owner = p;
+                            sq.HouseLevel = 0;
+                            p.OwnedProperties.Add(sq);
+
+                            DrawHouseOnBoard(sq, p.Color);
+                            SoundManager.PlaySound(Properties.Resources.cash); // Tiếng chi tiền
+                            AddLog($"Đã mua {sq.Name}");
+                        }
+                    }
+                    else AddLog("Không đủ tiền mua.");
+                }
+                // 2. Đất của chính mình -> Nâng cấp nhà
+                else if (sq.Owner == p)
+                {
+                    if (sq.Type == SquareType.Land && sq.HouseLevel < 3)
+                    {
+                        int cost = sq.UpgradeCost();
+                        if (p.Money >= cost)
+                        {
+                            DialogResult r = MessageBox.Show($"Nâng cấp nhà lên cấp {sq.HouseLevel + 1} (Giá {cost}$)?", "Nâng cấp", MessageBoxButtons.YesNo);
+                            if (r == DialogResult.Yes)
+                            {
+                                p.Money -= cost;
+                                sq.HouseLevel++;
+                                UpdateHouseVisual(sq);
+
+                                SoundManager.PlaySound(Properties.Resources.cash); // Tiếng chi tiền
+                                AddLog($"Nâng cấp {sq.Name} -> Lv{sq.HouseLevel}");
+                            }
+                        }
+                    }
+                }
+                // 3. Đất người khác -> Trả tiền thuê
+                else
+                {
+                    int rent = sq.CalculateRent();
+                    p.Money -= rent;
+                    sq.Owner.Money += rent;
+
+                    SoundManager.PlaySound(Properties.Resources.cash); // Tiếng mất tiền
+                    MessageBox.Show($"Đây là đất của {sq.Owner.Name}!\nBạn bị phạt: {rent}$");
+                    AddLog($"Trả {rent}$ cho {sq.Owner.Name}");
+                }
+            }
+            // Ô Cơ Hội / Khí Vận
+            else if (sq.Type == SquareType.Chance) DrawCard(p, chanceCards, "CƠ HỘI");
+            else if (sq.Name.Contains("Khí Vận")) DrawCard(p, communityCards, "KHÍ VẬN");
+
+            // Ô Thuế
+            else if (sq.Type == SquareType.Tax)
+            {
+                p.Money -= sq.Price;
+                SoundManager.PlaySound(Properties.Resources.cash);
+                AddLog($"Đóng thuế {sq.Price}$");
+            }
+
+            // Ô Vào Tù
+            else if (sq.Type == SquareType.GoToJail)
+            {
+                p.Position = 10; // Vị trí ô tù
+                MovePlayerToken(p);
+                AddLog("Vào Tù!");
+            }
+        }
+
+        // --- XỬ LÝ RÚT THẺ ---
+        private void DrawCard(Player p, List<Card> deck, string deckName)
+        {
+            Random rnd = new Random();
+            Card card = deck[rnd.Next(deck.Count)];
+
+            MessageBox.Show($"{deckName}: {card.Description}");
+            AddLog($"{deckName}: {card.Description}");
+
+            if (card.Action == CardAction.Money)
+            {
+                p.Money += card.Value;
+                if (card.Value > 0) SoundManager.PlaySound(Properties.Resources.cash); // Nhận tiền
+                else SoundManager.PlaySound(Properties.Resources.cash); // Mất tiền
+            }
+            else if (card.Action == CardAction.GoJail)
+            {
+                p.Position = 10;
+                MovePlayerToken(p);
+            }
+            else if (card.Action == CardAction.Move)
+            {
+                if (card.Value == 0) // Về Start
+                {
+                    p.Position = 0;
+                    p.Money += 200;
+                    SoundManager.PlaySound(Properties.Resources.cash);
+                }
+                else
+                {
+                    p.Position = (p.Position + card.Value + 40) % 40;
+                }
+                MovePlayerToken(p);
+            }
+        }
+
+        // --- XỬ LÝ PHÁ SẢN ---
         private bool CheckBankruptcy(Player p)
         {
             if (p.Money < 0)
             {
-                MessageBox.Show($"{p.Name} đã phá sản!", "Phá sản");
+                // 1. Phát âm thanh thất bại
+                SoundManager.PlaySound(Properties.Resources.fail);
+
+                // 2. Hiện Form hiệu ứng bị loại
+                EliminatePlayer(p.Name);
                 AddLog($"❌ {p.Name} PHÁ SẢN!");
 
-                this.Controls.Remove(p.Token);
-                p.Token.Dispose();
+                // 3. Xóa quân cờ
+                if (p.Token != null)
+                {
+                    this.Controls.Remove(p.Token);
+                    p.Token.Dispose();
+                }
 
+                // 4. Reset đất đai
                 foreach (var sq in p.OwnedProperties)
                 {
                     sq.Owner = null;
@@ -123,21 +272,69 @@ namespace FireFox
                     }
                 }
 
+                // 5. Xóa người chơi khỏi danh sách
                 players.Remove(p);
 
+                // 6. Điều chỉnh index
                 if (currentPlayerIndex >= players.Count) currentPlayerIndex = 0;
                 else currentPlayerIndex--;
 
-                return true;
+                return true; // Có người phá sản
             }
             return false;
         }
 
-        // Hàm cập nhật lượt đi (Phiên bản chống lỗi Crash)
+        // --- HIỆN CÁC FORM HIỆU ỨNG ---
+        private void ShowWinEffect(string winnerName)
+        {
+            SoundManager.StopBGM(); // Tắt nhạc nền game
+            FormWinEffect f = new FormWinEffect(winnerName);
+            f.ShowDialog();
+        }
+
+        private void EliminatePlayer(string name)
+        {
+            FormPlayerEliminated f = new FormPlayerEliminated(name);
+            f.ShowDialog();
+        }
+
+        private void ShowPauseMenu()
+        {
+            FormPauseMenu f = new FormPauseMenu();
+            f.ShowDialog();
+
+            if (f.Option == 1) { /* Tiếp tục */ }
+            else if (f.Option == 2)
+            {
+                this.Hide();
+                Form1 f1 = new Form1();
+                f1.ShowDialog();
+                this.Close();
+            }
+            else if (f.Option == 3)
+            {
+                WantsToExit = true;
+                this.Close();
+            }
+        }
+
+        // Phím tắt ESC
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                ShowPauseMenu();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        // --- HÀM HỖ TRỢ UI & DỮ LIỆU ---
         private void UpdateTurnUI()
         {
             if (btnRoll == null || players.Count == 0) return;
 
+            // Bảo vệ index
             if (currentPlayerIndex >= players.Count) currentPlayerIndex = 0;
             if (currentPlayerIndex < 0) currentPlayerIndex = 0;
 
@@ -155,64 +352,6 @@ namespace FireFox
             catch { currentPlayerIndex = 0; }
         }
 
-        private void HandleSquareLogic(Player p)
-        {
-            if (p.Position >= boardData.Count) return;
-            Square sq = boardData[p.Position];
-            AddLog($"-> Đến: {sq.Name}");
-
-            if (sq.Type == SquareType.Land || sq.Type == SquareType.Company)
-            {
-                if (sq.Owner == null)
-                {
-                    if (p.Money >= sq.Price)
-                    {
-                        DialogResult result = MessageBox.Show($"Mua '{sq.Name}' ({sq.Price}$)?", "Mua đất", MessageBoxButtons.YesNo);
-                        if (result == DialogResult.Yes)
-                        {
-                            p.Money -= sq.Price;
-                            sq.Owner = p;
-                            sq.HouseLevel = 0;
-                            p.OwnedProperties.Add(sq);
-                            DrawHouseOnBoard(sq, p.Color);
-                            AddLog($"Đã mua {sq.Name}");
-                        }
-                    }
-                    else AddLog("Không đủ tiền mua.");
-                }
-                else if (sq.Owner == p)
-                {
-                    if (sq.Type == SquareType.Land && sq.HouseLevel < 3)
-                    {
-                        int cost = sq.UpgradeCost();
-                        if (p.Money >= cost)
-                        {
-                            DialogResult r = MessageBox.Show($"Nâng cấp nhà (Cấp {sq.HouseLevel + 1}) - Giá {cost}$?", "Nâng cấp", MessageBoxButtons.YesNo);
-                            if (r == DialogResult.Yes)
-                            {
-                                p.Money -= cost;
-                                sq.HouseLevel++;
-                                UpdateHouseVisual(sq);
-                                AddLog($"Nâng cấp {sq.Name} -> Lv{sq.HouseLevel}");
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    int rent = sq.CalculateRent();
-                    p.Money -= rent;
-                    sq.Owner.Money += rent;
-                    MessageBox.Show($"Đất của {sq.Owner.Name}!\nPhạt: {rent}$");
-                    AddLog($"Trả {rent}$ cho {sq.Owner.Name}");
-                }
-            }
-            else if (sq.Type == SquareType.Chance) DrawCard(p, chanceCards, "CƠ HỘI");
-            else if (sq.Name.Contains("Khí Vận")) DrawCard(p, communityCards, "KHÍ VẬN");
-            else if (sq.Type == SquareType.Tax) { p.Money -= sq.Price; AddLog($"Đóng thuế {sq.Price}$"); }
-            else if (sq.Type == SquareType.GoToJail) { p.Position = 10; MovePlayerToken(p); AddLog("Vào Tù!"); }
-        }
-
         private void SetupGame()
         {
             Color[] colors = { Color.Red, Color.Blue, Color.Green, Color.Yellow };
@@ -226,7 +365,6 @@ namespace FireFox
                 pb.SizeMode = PictureBoxSizeMode.Zoom;
                 pb.BackColor = Color.Transparent;
 
-                // Nạp ảnh nhân vật: player1, player2...
                 Image playerImg = GetImageFromResource("player" + (i + 1));
                 if (playerImg != null) pb.Image = playerImg;
                 else pb.BackColor = p.Color;
@@ -242,48 +380,6 @@ namespace FireFox
             AddLog("Bắt đầu game! (1500$)");
             UpdateTurnUI();
             UpdateInfoPanel();
-        }
-
-        private Image GetImageFromResource(string resourceName)
-        {
-            try
-            {
-                object obj = Properties.Resources.ResourceManager.GetObject(resourceName);
-                if (obj is Image) return (Image)obj;
-                if (obj is byte[])
-                {
-                    using (MemoryStream ms = new MemoryStream((byte[])obj)) return Image.FromStream(ms);
-                }
-            }
-            catch { }
-            return null;
-        }
-
-        // --- CÁC HÀM HỖ TRỢ KHÁC (GIỮ NGUYÊN) ---
-        private void DrawHouseOnBoard(Square sq, Color playerColor)
-        {
-            Point pos = CalculatePosition(boardData.IndexOf(sq));
-            Label house = new Label();
-            house.Size = new Size(15, 15);
-            house.BackColor = playerColor;
-            house.BorderStyle = BorderStyle.FixedSingle;
-            house.Text = "0";
-            house.ForeColor = (playerColor == Color.Yellow) ? Color.Black : Color.White;
-            house.TextAlign = ContentAlignment.MiddleCenter;
-            house.Font = new Font("Arial", 6, FontStyle.Bold);
-            house.Location = new Point(pos.X + 10, pos.Y - 10);
-            this.Controls.Add(house);
-            house.BringToFront();
-            sq.HouseVisual = house;
-        }
-
-        private void UpdateHouseVisual(Square sq)
-        {
-            if (sq.HouseVisual != null)
-            {
-                sq.HouseVisual.Text = sq.HouseLevel.ToString();
-                if (sq.HouseLevel == 3) { sq.HouseVisual.Size = new Size(20, 20); sq.HouseVisual.BorderStyle = BorderStyle.Fixed3D; }
-            }
         }
 
         private void CreateInfoPanel()
@@ -312,9 +408,43 @@ namespace FireFox
             lblInfoPanel.Text = info;
         }
 
+        private void DrawHouseOnBoard(Square sq, Color playerColor)
+        {
+            Point pos = CalculatePosition(boardData.IndexOf(sq));
+            Label house = new Label();
+            house.Size = new Size(15, 15);
+            house.BackColor = playerColor;
+            house.BorderStyle = BorderStyle.FixedSingle;
+            house.Text = "0";
+            house.ForeColor = (playerColor == Color.Yellow) ? Color.Black : Color.White;
+            house.TextAlign = ContentAlignment.MiddleCenter;
+            house.Font = new Font("Arial", 6, FontStyle.Bold);
+
+            // Tinh chỉnh vị trí nhà cho đẹp
+            house.Location = new Point(pos.X + 10, pos.Y - 10);
+
+            this.Controls.Add(house);
+            house.BringToFront();
+            sq.HouseVisual = house;
+        }
+
+        private void UpdateHouseVisual(Square sq)
+        {
+            if (sq.HouseVisual != null)
+            {
+                sq.HouseVisual.Text = sq.HouseLevel.ToString();
+                if (sq.HouseLevel == 3)
+                {
+                    sq.HouseVisual.Size = new Size(20, 20);
+                    sq.HouseVisual.BorderStyle = BorderStyle.Fixed3D;
+                }
+            }
+        }
+
         private void MovePlayerToken(Player p)
         {
             Point basePos = CalculatePosition(p.Position);
+            // Xếp các quân cờ lệch nhau một chút để không đè lên nhau
             int offset = players.IndexOf(p) * 5;
             p.Token.Location = new Point(basePos.X + offset, basePos.Y + offset);
         }
@@ -324,6 +454,8 @@ namespace FireFox
             int x = 0, y = 0;
             int boardW = this.ClientSize.Width;
             int boardH = this.ClientSize.Height;
+
+            // Canh chỉnh tọa độ dựa trên kích thước bàn cờ
             int rightEdge = boardW - (int)(stepX * 1.5);
             int bottomEdge = boardH - (int)(stepY * 1.5);
             int leftEdge = (int)(stepX * 0.5);
@@ -333,34 +465,37 @@ namespace FireFox
             else if (pos >= 10 && pos < 20) { x = leftEdge; y = bottomEdge - ((pos - 10) * stepY); }
             else if (pos >= 20 && pos < 30) { x = leftEdge + ((pos - 20) * stepX); y = topEdge; }
             else if (pos >= 30 && pos < 40) { x = rightEdge; y = topEdge + ((pos - 30) * stepY); }
+
             return new Point(x, y);
         }
 
         private void AddLog(string msg)
         {
-            if (rtbLog != null) { rtbLog.AppendText(msg + "\n"); rtbLog.ScrollToCaret(); }
-        }
-
-        private void DrawCard(Player p, List<Card> deck, string deckName)
-        {
-            Random rnd = new Random();
-            Card card = deck[rnd.Next(deck.Count)];
-            MessageBox.Show($"{deckName}: {card.Description}");
-            AddLog($"{deckName}: {card.Description}");
-
-            if (card.Action == CardAction.Money) p.Money += card.Value;
-            else if (card.Action == CardAction.GoJail) { p.Position = 10; MovePlayerToken(p); }
-            else if (card.Action == CardAction.Move)
+            if (rtbLog != null)
             {
-                if (card.Value == 0) { p.Position = 0; p.Money += 200; }
-                else p.Position = (p.Position + card.Value + 40) % 40;
-                MovePlayerToken(p);
+                rtbLog.AppendText(msg + "\n");
+                rtbLog.ScrollToCaret();
             }
         }
 
+        private Image GetImageFromResource(string resourceName)
+        {
+            try
+            {
+                object obj = Properties.Resources.ResourceManager.GetObject(resourceName);
+                if (obj is Image) return (Image)obj;
+                if (obj is byte[])
+                {
+                    using (MemoryStream ms = new MemoryStream((byte[])obj)) return Image.FromStream(ms);
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        // --- DỮ LIỆU CỐ ĐỊNH (KHỞI TẠO BAN ĐẦU) ---
         private void InitBoardData()
         {
-            // --- Nạp dữ liệu (Đã rút gọn, hãy copy lại phần đầy đủ từ bài trước) ---
             boardData.Add(new Square("Bắt đầu (GO)", SquareType.Start, 0));
             boardData.Add(new Square("Phú Lâm", SquareType.Land, 60));
             boardData.Add(new Square("Khí Vận", SquareType.Chance, 0));
@@ -417,53 +552,9 @@ namespace FireFox
             communityCards.Add(new Card("Nhận tiền thừa kế 100$", CardAction.Money, 100));
             communityCards.Add(new Card("VÀO TÙ NGAY!", CardAction.GoJail, 0));
         }
-        private void ShowWinEffect(string winnerName)
-        {
-            FormWinEffect f = new FormWinEffect(winnerName);
-            f.ShowDialog();
-        }
-        private void EliminatePlayer(string name)
-        {
-            FormPlayerEliminated f = new FormPlayerEliminated(name);
-            f.ShowDialog();
-        }
-        public bool WantsToExit = false;
-        private void ShowPauseMenu()
-        {
-            FormPauseMenu f = new FormPauseMenu();
-            f.ShowDialog();
-
-            if (f.Option == 1)
-            {
-                // Tiếp tục → không làm gì
-            }
-            else if (f.Option == 2)
-            {
-                // Về Form1
-                this.Hide();
-                Form1 f1 = new Form1();
-                f1.ShowDialog();
-                this.Close();
-            }
-            else if (f.Option == 3)
-            {
-                WantsToExit = true;
-                this.Close();
-            }
-        }
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if (keyData == Keys.Escape)
-            {
-                ShowPauseMenu();
-                return true;
-            }
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
     }
 
-    // --- 2. CÁC CLASS DỮ LIỆU PHỤ (ĐẶT Ở DƯỚI CÙNG) ---
-
+    // --- 2. CÁC CLASS DỮ LIỆU PHỤ ---
     public enum SquareType { Start, Land, Chance, Jail, GoToJail, Tax, Parking, Company }
     public enum CardAction { Money, Move, GoJail, GetOutOfJail }
 
@@ -516,5 +607,4 @@ namespace FireFox
             OwnedProperties = new List<Square>();
         }
     }
-    
 }
